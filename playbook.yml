@@ -1,0 +1,126 @@
+---
+- name: Desktop Configurator
+  hosts: lab-rat
+  become: yes
+  vars:
+    git_diff_tool: meld
+    git_merge_tool: meld
+  tasks:
+# CLI
+    - name: Update System
+      apt:
+        update_cache: yes
+#        upgrade: dist
+
+    - name: Install Bash Utilities
+      apt:
+        name: "{{ item }}"
+        state: present
+      with_items:
+        - grep
+        - plocate
+        - curl
+        - fzf
+        - nano
+        - net-tools
+        - htop
+
+    - name: Install CLI programs
+      apt:
+        name: "{{ item }}"
+        state: present
+      with_items:
+        - git
+        - git-man
+        - ansible
+        - docker.io
+
+    - name: Check if kubectl exists
+      become: no
+      command: kubectl version --client
+      register: kubectl_check
+      ignore_errors: yes
+    - name: Install kubectl
+      shell: |
+        curl -LO "https://dl.k8s.io/release/$(curl -L -s https://dl.k8s.io/release/stable.txt)/bin/linux/amd64/kubectl"
+        sudo install -o root -g root -m 0755 kubectl /usr/local/bin/kubectl && rm kubectl
+      args:
+        executable: /bin/bash
+      when: kubectl_check.failed
+    - name: Check kubectl Instalation
+      become: no
+      command: kubectl version --client
+      when: kubectl_check.failed
+
+    - name: Check if minikube exists
+      become: no
+      command: minikube version
+      register: minikube_check
+      ignore_errors: yes
+    - name: Install minikube
+      shell: |
+        curl -LO https://storage.googleapis.com/minikube/releases/latest/minikube-linux-amd64
+        sudo install minikube-linux-amd64 /usr/local/bin/minikube && rm minikube-linux-amd64
+      args:
+        executable: /bin/bash
+      when: minikube_check.failed
+    - name: Check minikube Instalation
+      become: no
+      command: minikube version
+      when: minikube_check.failed
+
+# Dev GUI
+    - name: Install pref. dev dependencies
+      apt:
+        name: "{{ item }}"
+        state: present
+      with_items:
+        - wget
+        - software-properties-common
+        - apt-transport-https
+        - gpg
+
+    - name: Install pref. dev programs
+      apt:
+        name: "{{ item }}"
+        state: present
+      with_items:
+        - firefox
+        - p7zip-full
+        - p7zip-rar
+        - virtualbox
+#        - virtualbox-ext-pack
+        - virtualbox-qt
+        - "{{ git_diff_tool }}"
+        - "{{ git_merge_tool }}"
+
+    - name: Configure git diff/merge tool
+      become: no
+      shell: |
+        git config --global merge.tool "{{ git_merge_tool }}"
+        git config --global mergetool."{{ git_merge_tool }}".path '/usr/bin/{{ git_merge_tool }}'
+        git config --global mergetool.prompt false
+        git config --global diff.tool "{{ git_diff_tool}}"
+        git config --global difftool."{{ git_diff_tool }}".path '/usr/bin/{{ git_diff_tool}}'
+        git config --global diftool.prompt false
+      args:
+        executable: /bin/bash
+
+    - name: Check VS Code
+      become: no
+      command: code --version
+      register: vscode_check
+      ignore_errors: yes
+    - name: Install VS Code
+      shell: |
+        curl -L -o "code.deb" "https://code.visualstudio.com/sha/download?build=stable&os=linux-deb-x64"
+        sudo dpkg -i code.deb
+        rm code.deb
+      args:
+        executable: /bin/bash
+      when: vscode_check.failed
+    - name: Check VS Code Installation
+      become: no
+      command: code --version
+      when: vscode_check.failed
+
