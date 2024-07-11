@@ -1,19 +1,19 @@
 ---
 - name: Desktop Configurator
   hosts: lab-rat
-  become: yes
+  become: true
   vars:
     git_diff_tool: meld
     git_merge_tool: meld
   tasks:
 # CLI
     - name: Update System
-      apt:
-        update_cache: yes
+      ansible.builtin.apt:
+        update_cache: true
 #        upgrade: dist
 
     - name: Install Bash Utilities
-      apt:
+      ansible.builtin.apt:
         name: "{{ item }}"
         state: present
       with_items:
@@ -26,7 +26,7 @@
         - htop
 
     - name: Install CLI programs
-      apt:
+      ansible.builtin.apt:
         name: "{{ item }}"
         state: present
       with_items:
@@ -36,42 +36,49 @@
         - docker.io
 
     - name: Check if kubectl exists
-      become: no
-      command: kubectl version --client
+      become: false
+      ansible.builtin.command: kubectl version --client
       register: kubectl_check
-      ignore_errors: yes
-    - name: Install kubectl
-      shell: |
+      changed_when: false
+      ignore_errors: true
+
+    - name: Install kubectl # noqa: command-instead-of-module
+      ansible.builtin.shell: |
         curl -LO "https://dl.k8s.io/release/$(curl -L -s https://dl.k8s.io/release/stable.txt)/bin/linux/amd64/kubectl"
         sudo install -o root -g root -m 0755 kubectl /usr/local/bin/kubectl && rm kubectl
       args:
         executable: /bin/bash
+      changed_when: kubectl_check.failed
       when: kubectl_check.failed
     - name: Check kubectl Instalation
-      become: no
-      command: kubectl version --client
+      become: false
+      ansible.builtin.command: kubectl version --client
+      changed_when: false
       when: kubectl_check.failed
 
     - name: Check if minikube exists
-      become: no
-      command: minikube version
+      become: false
+      ansible.builtin.command: minikube version
       register: minikube_check
-      ignore_errors: yes
-    - name: Install minikube
-      shell: |
+      changed_when: false
+      ignore_errors: true
+    - name: Install minikube # noqa: command-instead-of-module
+      ansible.builtin.shell: |
         curl -LO https://storage.googleapis.com/minikube/releases/latest/minikube-linux-amd64
         sudo install minikube-linux-amd64 /usr/local/bin/minikube && rm minikube-linux-amd64
       args:
         executable: /bin/bash
+      changed_when: minikube_check.failed
       when: minikube_check.failed
     - name: Check minikube Instalation
-      become: no
-      command: minikube version
+      become: false
+      ansible.builtin.command: minikube version
+      changed_when: false
       when: minikube_check.failed
 
 # Dev GUI
     - name: Install pref. dev dependencies
-      apt:
+      ansible.builtin.apt:
         name: "{{ item }}"
         state: present
       with_items:
@@ -81,7 +88,7 @@
         - gpg
 
     - name: Install pref. dev programs
-      apt:
+      ansible.builtin.apt:
         name: "{{ item }}"
         state: present
       with_items:
@@ -95,32 +102,42 @@
         - "{{ git_merge_tool }}"
 
     - name: Configure git diff/merge tool
-      become: no
-      shell: |
-        git config --global merge.tool "{{ git_merge_tool }}"
-        git config --global mergetool."{{ git_merge_tool }}".path '/usr/bin/{{ git_merge_tool }}'
-        git config --global mergetool.prompt false
-        git config --global diff.tool "{{ git_diff_tool}}"
-        git config --global difftool."{{ git_diff_tool }}".path '/usr/bin/{{ git_diff_tool}}'
-        git config --global diftool.prompt false
-      args:
-        executable: /bin/bash
+      become: false
+      community.general.git_config:
+        name: "{{ item.name }}"
+        value: "{{ item.value }}"
+        scope: global
+      loop:
+        - name: merge.tool
+          value: "{{ git_merge_tool }}"
+        - name: "mergetool.{{ git_merge_tool }}.path"
+          value: "/usr/bin/{{ git_merge_tool }}"
+        - name: mergetool.prompt
+          value: false
+        - name: diff.tool
+          value: "{{ git_diff_tool }}"
+        - name: "difftool.{{ git_diff_tool }}.path"
+          value: "/usr/bin/{{ git_diff_tool }}"
+        - name: difftool.prompt
+          value: false
 
     - name: Check VS Code
-      become: no
-      command: code --version
+      become: false
+      ansible.builtin.command: code --version
       register: vscode_check
-      ignore_errors: yes
-    - name: Install VS Code
-      shell: |
+      changed_when: false
+      ignore_errors: true
+    - name: Install VS Code # noqa: command-instead-of-module
+      ansible.builtin.shell: |
         curl -L -o "code.deb" "https://code.visualstudio.com/sha/download?build=stable&os=linux-deb-x64"
         sudo dpkg -i code.deb
         rm code.deb
       args:
         executable: /bin/bash
+      changed_when: vscode_check.failed
       when: vscode_check.failed
     - name: Check VS Code Installation
-      become: no
-      command: code --version
+      become: false
+      ansible.builtin.command: code --version
+      changed_when: false
       when: vscode_check.failed
-
