@@ -18,4 +18,6 @@ jobs:
           source .ansible-venv/bin/activate
           pip install -r requirements.txt
       - name: Run Ansible Lint
-        run: ansible-lint playbook.yml
+        run: |
+          source .ansible-venv/bin/activate
+          ansible-lint playbook.yml
