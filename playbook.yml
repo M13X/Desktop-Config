@@ -98,6 +98,7 @@
         - virtualbox
 #        - virtualbox-ext-pack
         - virtualbox-qt
+        - unzip
         - "{{ git_diff_tool }}"
         - "{{ git_merge_tool }}"
 
@@ -141,3 +142,31 @@
       ansible.builtin.command: code --version
       changed_when: false
       when: vscode_check.failed
+
+    - name: Download Font
+      become: false
+      ansible.builtin.get_url:
+        url: https://github.com/ryanoasis/nerd-fonts/releases/download/v3.2.1/Hack.zip
+        dest: ~/hack.zip
+        mode: '0744'
+    - name: Install Font
+      ansible.builtin.shell: |
+        unzip hack.zip -d hack
+        rm hack.zip
+        sudo mv hack /usr/share/fonts/hack
+        gsettings set org.gnome.Terminal.Legacy.Profile:/org/gnome/Terminal/Legacy/Profiles:/:$(gsettings get org.gnome.Terminal.ProfilesList default | tr -d "'")/ font 'NerdNerdFontMono'
+      args:
+        executable: /bin/bash
+    - name: Install Starship
+      ansible.builtin.shell: |
+        curl -sS https://starship.rs/install.sh | sh
+        echo 'eval "$(starship init bash)"' >> ~/.bashrc
+        echo "export STARSHIP_CONFIG=~/.config/starship.toml" >> ~/.bashrc
+        mkdir -p ~/.config
+      args:
+        executable: /bin/bash
+    - name: Download Starship toml
+      copy:
+        remote_src: true
+        src: starship.toml
+        dest: ~/.config/starship.toml
