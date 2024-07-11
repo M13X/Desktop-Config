@@ -1,18 +1,20 @@
 ---
 - name: Desktop Configurator
   hosts: lab-rat
-  become: true
+#  become: true
   vars:
     git_diff_tool: meld
     git_merge_tool: meld
   tasks:
 # CLI
     - name: Update System
+      become: true
       ansible.builtin.apt:
         update_cache: true
 #        upgrade: dist
 
     - name: Install Bash Utilities
+      become: true
       ansible.builtin.apt:
         name: "{{ item }}"
         state: present
@@ -26,6 +28,7 @@
         - htop
 
     - name: Install CLI programs
+      become: true
       ansible.builtin.apt:
         name: "{{ item }}"
         state: present
@@ -36,13 +39,13 @@
         - docker.io
 
     - name: Check if kubectl exists
-      become: false
       ansible.builtin.command: kubectl version --client
       register: kubectl_check
       changed_when: false
       ignore_errors: true
 
     - name: Install kubectl # noqa: command-instead-of-module
+      become: true
       ansible.builtin.shell: |
         curl -LO "https://dl.k8s.io/release/$(curl -L -s https://dl.k8s.io/release/stable.txt)/bin/linux/amd64/kubectl"
         sudo install -o root -g root -m 0755 kubectl /usr/local/bin/kubectl && rm kubectl
@@ -51,18 +54,17 @@
       changed_when: kubectl_check.failed
       when: kubectl_check.failed
     - name: Check kubectl Instalation
-      become: false
       ansible.builtin.command: kubectl version --client
       changed_when: false
       when: kubectl_check.failed
 
     - name: Check if minikube exists
-      become: false
       ansible.builtin.command: minikube version
       register: minikube_check
       changed_when: false
       ignore_errors: true
     - name: Install minikube # noqa: command-instead-of-module
+      become: true
       ansible.builtin.shell: |
         curl -LO https://storage.googleapis.com/minikube/releases/latest/minikube-linux-amd64
         sudo install minikube-linux-amd64 /usr/local/bin/minikube && rm minikube-linux-amd64
@@ -71,13 +73,13 @@
       changed_when: minikube_check.failed
       when: minikube_check.failed
     - name: Check minikube Instalation
-      become: false
       ansible.builtin.command: minikube version
       changed_when: false
       when: minikube_check.failed
 
 # Dev GUI
     - name: Install pref. dev dependencies
+      become: true
       ansible.builtin.apt:
         name: "{{ item }}"
         state: present
@@ -88,6 +90,7 @@
         - gpg
 
     - name: Install pref. dev programs
+      become: true
       ansible.builtin.apt:
         name: "{{ item }}"
         state: present
@@ -103,7 +106,6 @@
         - "{{ git_merge_tool }}"
 
     - name: Configure git diff/merge tool
-      become: false
       community.general.git_config:
         name: "{{ item.name }}"
         value: "{{ item.value }}"
@@ -123,12 +125,12 @@
           value: false
 
     - name: Check VS Code
-      become: false
       ansible.builtin.command: code --version
       register: vscode_check
       changed_when: false
       ignore_errors: true
     - name: Install VS Code # noqa: command-instead-of-module
+      become: true
       ansible.builtin.shell: |
         curl -L -o "code.deb" "https://code.visualstudio.com/sha/download?build=stable&os=linux-deb-x64"
         sudo dpkg -i code.deb
@@ -138,35 +140,58 @@
       changed_when: vscode_check.failed
       when: vscode_check.failed
     - name: Check VS Code Installation
-      become: false
       ansible.builtin.command: code --version
       changed_when: false
       when: vscode_check.failed
 
+    - name: Check Font
+      command: ls /usr/share/fonts/hack
+      register: font_check
+      changed_when: false
+      ignore_errors: true
     - name: Download Font
-      become: false
       ansible.builtin.get_url:
         url: https://github.com/ryanoasis/nerd-fonts/releases/download/v3.2.1/Hack.zip
-        dest: ~/hack.zip
-        mode: '0744'
+        dest: /tmp/hack.zip
+      changed_when: font_check.rc != 0
+      when: font_check.rc != 0
     - name: Install Font
       ansible.builtin.shell: |
-        unzip hack.zip -d hack
-        rm hack.zip
-        sudo mv hack /usr/share/fonts/hack
+        rm -rf /tmp/hack
+        unzip /tmp/hack.zip -d /tmp/hack
+        mv /tmp/hack /usr/share/fonts/hack
         gsettings set org.gnome.Terminal.Legacy.Profile:/org/gnome/Terminal/Legacy/Profiles:/:$(gsettings get org.gnome.Terminal.ProfilesList default | tr -d "'")/ font 'NerdNerdFontMono'
+        rm -rf /tmp/hack.zip /tmp/hack
       args:
         executable: /bin/bash
+      changed_when: font_check.rc != 0
+      when: font_check.rc != 0
+
+    - name: Check Starship
+      shell: cat "{{ ansible_user_dir }}/.bashrc" | grep "STARSHIP_CONFIG"
+      args:
+        executable: /bin/bash
+      changed_when: false
+      register: starship_check
+      ignore_errors: true
     - name: Install Starship
+      become: true
       ansible.builtin.shell: |
-        curl -sS https://starship.rs/install.sh | sh
-        echo 'eval "$(starship init bash)"' >> ~/.bashrc
-        echo "export STARSHIP_CONFIG=~/.config/starship.toml" >> ~/.bashrc
-        mkdir -p ~/.config
+        rm /tmp/install.sh
+        curl -sSL https://starship.rs/install.sh -o /tmp/install.sh
+        sudo sh /tmp/install.sh -y
+        sudo rm /tmp/install.sh
+        echo 'eval "$(starship init bash)"' >> "{{ ansible_user_dir }}/.bashrc"
+        echo "export STARSHIP_CONFIG=~/.config/starship.toml" >> "{{ ansible_user_dir }}/.bashrc"
+        mkdir -p "{{ ansible_user_dir }}/.config"
       args:
         executable: /bin/bash
+      changed_when: starship_check.rc != 0
+      when: starship_check.rc != 0
     - name: Download Starship toml
       copy:
-        remote_src: true
+        remote_src: false
         src: starship.toml
-        dest: ~/.config/starship.toml
+        dest: "{{ ansible_user_dir }}/.config/starship.toml"
+      changed_when: starship_check.rc != 0
+      when: starship_check.rc != 0
