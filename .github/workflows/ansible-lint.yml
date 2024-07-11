@@ -1,5 +1,6 @@
 name: Ansible Lint
 on:
+  workflow_dispatch:
   pull_request:
     branches: ["main", "master", "stable", "release/v*"]
 
