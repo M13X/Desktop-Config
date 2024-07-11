@@ -103,7 +103,7 @@
 
     - name: Configure git diff/merge tool
       become: false
-      git_config:
+      community.general.git_config:
         name: "{{ item.name }}"
         value: "{{ item.value }}"
         scope: global
