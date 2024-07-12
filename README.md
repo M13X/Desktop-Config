@@ -92,3 +92,10 @@ The repository will be removed from host.
 > [!NOTE]
 > In this repository a GitHub Action is present `ansible-lint.yml` that will trigger when a pull request towards an important branch is created.  
 > This will lint `playbook.yml` 
+
+## To-Do
+
+- Add Desktop User Applications
+- Make inventory dynamic
+- Multiple OS (Currently only Ubuntu)
+- Create selector for applications, both CLI and GUI (Something like Ninite)
