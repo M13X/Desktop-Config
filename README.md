@@ -3,11 +3,14 @@
 ## Starting
 
 Download `desktop-config.sh`
+
+Then run the script, `sudo` privilages will be required:
 ```shell
 bash desktop-config.sh
 ```
-> [!INFO]
-> This script will install all the necesary components.
+
+> [!NOTE]
+> This script will install all the necesary components.  
 > The following chapters are describing what the script is doing.
 
 ## Host setup
@@ -26,10 +29,10 @@ A virtual environment `.ansible-venv` will be created and activated.
 Ansible will be installed inside the virtual environment and `ansible-galaxy` will install `community.general` collection
 
 > [!NOTE]
-> `inventory.ini` is currently hardcoded.
+> `inventory.ini` is currently hardcoded.  
 > Future implementation might include a dynamic inventory.
 
-The playbook will run.
+The playbook will run:
 ```shell
 ansible-playbook -i inventory.ini playbook.yml
 ```
@@ -86,6 +89,6 @@ The repository will be removed from host.
 
 ## Extras
 
-> [!INFO]
-> In this repository a GitHub Action is present `ansible-lint.yml` that will trigger when a pull request towards an important branch is created.
+> [!NOTE]
+> In this repository a GitHub Action is present `ansible-lint.yml` that will trigger when a pull request towards an important branch is created.  
 > This will lint `playbook.yml` 
