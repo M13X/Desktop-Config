@@ -164,7 +164,7 @@
         set -o pipefail
         rm -rf /tmp/hack
         unzip /tmp/hack.zip -d /tmp/hack
-        mv /tmp/hack /usr/share/fonts/hack # noqa: yaml[line-length]
+        sudo mv /tmp/hack /usr/share/fonts/hack # noqa: yaml[line-length]
         gsettings set org.gnome.Terminal.Legacy.Profile:/org/gnome/Terminal/Legacy/Profiles:/:$(gsettings get org.gnome.Terminal.ProfilesList default | tr -d "'")/ font 'NerdNerdFontMono'
         rm -rf /tmp/hack.zip /tmp/hack
       args:
