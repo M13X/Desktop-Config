@@ -160,6 +160,7 @@
       changed_when: font_check.rc != 0
       when: font_check.rc != 0
     - name: Install Font
+      become: true
       ansible.builtin.shell: |
         set -o pipefail
         rm -rf /tmp/hack
