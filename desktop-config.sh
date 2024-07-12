@@ -14,7 +14,7 @@ echo ""
 
 echo -e "${BLUE}------- System Update -------${NC}"
 sudo apt update
-sudo apt install -y git python3 python3-venv python3-pip openssh-client
+sudo apt install -y git python3 python3-venv python3-pip sshpass openssh-client
 echo -e "${BLUE}------- System Updated ------${NC}"
 echo ""
 
