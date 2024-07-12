@@ -1,6 +1,6 @@
 ---
 - name: Desktop Configurator
-  hosts: lab-rat
+  hosts: [ubuntu, mint]    # lab-rat
 #  become: true
   vars:
     git_diff_tool: meld
