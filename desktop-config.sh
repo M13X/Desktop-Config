@@ -26,7 +26,9 @@ echo ""
 
 echo -e "${BLUE}---- Activate Environment ---${NC}"
 python3 -m venv .ansible-venv
+echo "Virtual environment created"
 source .ansible-venv/bin/activate
+echo ".ansible-venv activated"
 echo -e "${BLUE}--- Activated Environment ---${NC}"
 echo ""
 
