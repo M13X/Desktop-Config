@@ -28,7 +28,7 @@ A virtual environment `.ansible-venv` will be created and activated.
 
 Ansible will be installed inside the virtual environment and `ansible-galaxy` will install `community.general` collection
 
-> [!NOTE]
+> [!WARNING]
 > `inventory.ini` is currently hardcoded.  
 > Future implementation might include a dynamic inventory.
 
