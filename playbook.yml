@@ -6,6 +6,9 @@
     git_diff_tool: meld
     git_merge_tool: meld
   tasks:
+    - name: Disable SSH host key checking
+      ansible.builtin.set_fact:
+        ANSIBLE_HOST_KEY_CHECKING: 'False'
 # CLI
     - name: Update System
       become: true
